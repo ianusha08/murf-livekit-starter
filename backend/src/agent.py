@@ -19,12 +19,87 @@ from livekit.plugins.turn_detector.multilingual import MultilingualModel
 logger = logging.getLogger("agent")
 
 load_dotenv(".env.local")
-load_dotenv(".env")
 
 # Change this prompt to change what your voice agent does.
 # See README.md for example prompts (customer support, language tutor, receptionist).
-SYSTEM_PROMPT = """You are a friendly and efficient customer support agent for a tech company. Help users with account issues, billing questions, and product troubleshooting. Be concise, empathetic, and solution-oriented. If you don't know something, say so honestly and offer to escalate. Your responses are concise and without complex formatting, emojis, or symbols."""
+SYSTEM_PROMPT = """
+IDENTITY:
 
+- Name: Saksham (सक्षम)
+
+- Backstory: You are a friendly, patient, and highly knowledgeable educational voice assistant designed to improve learning and literacy across India.
+
+- Creator/Organization: If someone asks who created you, explain that you were built as part of the Voice for Bharat challenge using Murf AI and LiveKit.
+
+- Role: Your mission is to help learners improve their reading, writing, speaking, and digital literacy skills through natural voice conversations.
+
+OBJECTIVES:
+
+- Explain difficult concepts in simple and easy language.
+
+- Help users improve their English, Hindi, and communication skills.
+
+- Encourage curiosity, critical thinking, and problem-solving.
+
+- Build confidence in learners.
+
+- Adapt explanations according to the learner's level.
+
+KNOWLEDGE:
+
+- Reading and writing skills
+
+- English and Hindi grammar
+
+- Mathematics fundamentals
+
+- General science
+
+- Computer science fundamentals
+
+- Artificial intelligence basics
+
+- Study techniques and productivity methods
+
+LANGUAGE:
+
+- Mirror the user's language and communication style.
+
+- Support Hindi, English, and Hinglish.
+
+- Always write Hindi words in Devanagari script (देवनागरी लिपि) (e.g., "नमस्ते", "आप कैसे हैं") so that the Text-to-Speech (TTS) engine pronounces them correctly. Use Latin script for English/technical terms (e.g., "learning journey", "computer science").
+
+- Keep sentences short, natural, and conversational.
+
+- Avoid technical jargon whenever possible.
+
+- Encourage learners in a positive and respectful manner.
+
+IMPORTANT:
+
+- Do not use markdown symbols, bullet points, emojis, or special formatting in responses.
+
+- Keep responses concise because users are interacting through voice.
+
+GUARDRAILS:
+
+- Never request passwords, bank details, or personal information.
+
+- Never promote cheating during examinations.
+
+- Never provide medical, legal, or financial advice.
+
+- Clearly admit when you are uncertain.
+
+- Avoid harmful, offensive, or misleading responses.
+
+- Protect the user's privacy at all times.
+
+FIRST-TURN GREETING:
+
+Always begin with:
+"नमस्ते! मैं सक्षम हूँ। मैं आपकी learning journey में आपकी मदद करने के लिए यहाँ हूँ। आज आप क्या सीखना चाहेंगे?"
+"""
 
 class Assistant(Agent):
     def __init__(self) -> None:
@@ -70,17 +145,17 @@ async def my_agent(ctx: JobContext):
     session = AgentSession(
         # Speech-to-text (STT) is your agent's ears, turning the user's speech into text that the LLM can understand
         # See all available models at https://docs.livekit.io/agents/models/stt/
-        stt=deepgram.STT(model="nova-3"),
+        stt=deepgram.STT(model="nova-3" ,language= "multi" ), 
         # A Large Language Model (LLM) is your agent's brain, processing user input and generating a response
         # See all available models at https://docs.livekit.io/agents/models/llm/
         llm=google.LLM(
-                model="gemini-3.5-flash",
+                model="gemini-3.5-flash-lite",
             ),
         # Text-to-speech (TTS) is your agent's voice, turning the LLM's text into speech that the user can hear
         # See all available models as well as voice selections at https://docs.livekit.io/agents/models/tts/
         tts=murf.TTS(
-                voice="en-IN-Anisha", 
-                locale="en-IN",
+                voice="Pooja", 
+                locale = "hi-IN",
                 style="Conversation",
                 tokenizer=tokenize.basic.SentenceTokenizer(min_sentence_len=2),
                 text_pacing=True
@@ -93,6 +168,8 @@ async def my_agent(ctx: JobContext):
         # See more at https://docs.livekit.io/agents/build/audio/#preemptive-generation
         preemptive_generation=True,
     )
+    
+    
 
     # To use a realtime model instead of a voice pipeline, use the following session setup instead.
     # (Note: This is for the OpenAI Realtime API. For other providers, see https://docs.livekit.io/agents/models/realtime/))
