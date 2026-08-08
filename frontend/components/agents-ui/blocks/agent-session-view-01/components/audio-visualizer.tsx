@@ -54,7 +54,7 @@ export function AudioVisualizer({
           audioTrack={audioTrack}
           color={audioVisualizerColor}
           colorShift={audioVisualizerColorShift}
-          className={cn('size-[300px] md:size-[450px]', className)}
+          className={cn('size-[120px] md:size-[150px]', className)}
           {...props}
         />
       );
@@ -68,7 +68,7 @@ export function AudioVisualizer({
             color={audioVisualizerColor}
             colorShift={audioVisualizerColorShift}
             lineWidth={isChatOpen ? audioVisualizerWaveLineWidth * 2 : audioVisualizerWaveLineWidth}
-            className="size-[300px] md:size-[450px]"
+            className="size-[120px] md:size-[150px]"
           />
         </motion.div>
       );
@@ -78,11 +78,11 @@ export function AudioVisualizer({
 
       let size: 'icon' | 'sm' | 'md' | 'lg' | 'xl' = 'sm';
       if (totalCount < 100) {
-        size = 'xl';
-      } else if (totalCount < 200) {
         size = 'lg';
-      } else if (totalCount < 300) {
+      } else if (totalCount < 200) {
         size = 'md';
+      } else if (totalCount < 300) {
+        size = 'sm';
       }
 
       return (
@@ -96,7 +96,7 @@ export function AudioVisualizer({
           radius={Math.round(
             Math.min(audioVisualizerGridRowCount, audioVisualizerGridColumnCount) / 4
           )}
-          className={cn('size-[350px] gap-0 p-8 *:place-self-center md:size-[450px]', className)}
+          className={cn('size-[140px] gap-0 p-4 *:place-self-center md:size-[180px]', className)}
           {...props}
         />
       );
@@ -105,33 +105,33 @@ export function AudioVisualizer({
       return (
         <motion.div className={className} {...props}>
           <MotionAgentAudioVisualizerRadial
-            size="xl"
+            size="md"
             state={state}
             color={audioVisualizerColor}
             audioTrack={audioTrack}
             radius={audioVisualizerRadialRadius}
             barCount={audioVisualizerRadialBarCount}
-            className="size-[450px]"
+            className="size-[160px]"
           />
         </motion.div>
       );
     }
     default: {
-      let size: 'icon' | 'sm' | 'md' | 'lg' | 'xl' = 'icon';
-      let sizedClassName = cn('size-[300px] md:size-[450px]', className);
+      let size: 'icon' | 'sm' | 'md' | 'lg' | 'xl' = 'sm';
+      let sizedClassName = cn('h-12 w-auto items-center justify-center gap-2.5 *:min-h-[10px] *:w-[12px]', className);
 
       if (audioVisualizerBarCount <= 5) {
-        size = 'xl';
-        sizedClassName = cn('size-[450px] *:min-h-[64px] *:w-[64px] gap-4', className);
-      } else if (audioVisualizerBarCount <= 10) {
-        size = 'lg';
-        sizedClassName = cn('size-[450px]', className);
-      } else if (audioVisualizerBarCount <= 15) {
-        size = 'md';
-        sizedClassName = cn('size-[350px] md:size-[450px]', className);
-      } else if (audioVisualizerBarCount <= 30) {
         size = 'sm';
-        sizedClassName = cn('size-[300px] md:size-[450px]', className);
+        sizedClassName = cn('h-12 w-auto items-center justify-center gap-2.5 *:min-h-[10px] *:w-[12px]', className);
+      } else if (audioVisualizerBarCount <= 10) {
+        size = 'sm';
+        sizedClassName = cn('h-12 w-auto items-center justify-center gap-2 *:min-h-[8px] *:w-[9px]', className);
+      } else if (audioVisualizerBarCount <= 15) {
+        size = 'sm';
+        sizedClassName = cn('h-10 w-auto items-center justify-center gap-1.5 *:min-h-[6px] *:w-[7px]', className);
+      } else if (audioVisualizerBarCount <= 30) {
+        size = 'icon';
+        sizedClassName = cn('h-8 w-auto items-center justify-center gap-1 *:min-h-[4px] *:w-[5px]', className);
       }
 
       return (
@@ -144,7 +144,7 @@ export function AudioVisualizer({
           className={sizedClassName}
           {...props}
         >
-          <span className="min-h-2.5 w-2.5 rounded-full bg-current/10 transition-colors duration-250 ease-linear data-[lk-highlighted=true]:bg-current" />
+          <span className="min-h-2.5 w-3 rounded-full bg-current/15 transition-colors duration-250 ease-linear data-[lk-highlighted=true]:bg-current" />
         </MotionAgentAudioVisualizerBar>
       );
     }
