@@ -24,11 +24,11 @@ export function MicPermissionModal({ onRetry, onClose }: MicPermissionModalProps
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-xl font-bold tracking-tight flex items-center justify-center gap-2">
-            Microphone Access Blocked
-          </h3>
+            <h3 className="text-xl font-bold tracking-tight flex items-center justify-center gap-2">
+              Microphone Permission Denied
+            </h3>
           <p className="text-xs text-muted-foreground">
-            Your AI Learning Assistant needs microphone permission to hear your voice answers.
+            We couldn't access your microphone. Please enable microphone permission in your browser settings so the assistant can hear your voice.
           </p>
         </div>
 
