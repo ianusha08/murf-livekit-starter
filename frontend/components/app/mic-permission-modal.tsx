@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
+import { AlertCircle, Lock, MicOff, RefreshCw } from 'lucide-react';
 import { motion } from 'motion/react';
-import { MicOff, Lock, RefreshCw, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export interface MicPermissionModalProps {
@@ -12,37 +12,40 @@ export interface MicPermissionModalProps {
 
 export function MicPermissionModal({ onRetry, onClose }: MicPermissionModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="w-full max-w-md bg-card border border-destructive/30 rounded-2xl p-6 shadow-2xl text-card-foreground flex flex-col items-center text-center space-y-4"
+        className="bg-card border-destructive/30 text-card-foreground flex w-full max-w-md flex-col items-center space-y-4 rounded-2xl border p-6 text-center shadow-2xl"
       >
-        <div className="size-14 rounded-full bg-destructive/10 text-destructive flex items-center justify-center">
+        <div className="bg-destructive/10 text-destructive flex size-14 items-center justify-center rounded-full">
           <MicOff className="size-7" />
         </div>
 
         <div className="space-y-1">
-            <h3 className="text-xl font-bold tracking-tight flex items-center justify-center gap-2">
-              Microphone Permission Denied
-            </h3>
-          <p className="text-xs text-muted-foreground">
-            We couldn't access your microphone. Please enable microphone permission in your browser settings so the assistant can hear your voice.
+          <h3 className="flex items-center justify-center gap-2 text-xl font-bold tracking-tight">
+            Microphone Permission Denied
+          </h3>
+          <p className="text-muted-foreground text-xs">
+            We couldn't access your microphone. Please enable microphone permission in your browser
+            settings so the assistant can hear your voice.
           </p>
         </div>
 
-        <div className="w-full bg-muted/60 rounded-xl p-4 text-left text-xs space-y-2 border border-border/50">
-          <div className="font-semibold text-foreground flex items-center gap-1.5 mb-1">
+        <div className="bg-muted/60 border-border/50 w-full space-y-2 rounded-xl border p-4 text-left text-xs">
+          <div className="text-foreground mb-1 flex items-center gap-1.5 font-semibold">
             <Lock className="size-3.5 text-amber-500" />
             How to enable your microphone:
           </div>
-          <ol className="list-decimal list-inside space-y-1.5 text-muted-foreground font-normal">
+          <ol className="text-muted-foreground list-inside list-decimal space-y-1.5 font-normal">
             <li>
-              Look at your browser&apos;s address bar and click the <strong>Lock / Settings icon</strong>.
+              Look at your browser&apos;s address bar and click the{' '}
+              <strong>Lock / Settings icon</strong>.
             </li>
             <li>
-              Find <strong>Microphone</strong> in the permissions list and change it to <strong>Allow</strong>.
+              Find <strong>Microphone</strong> in the permissions list and change it to{' '}
+              <strong>Allow</strong>.
             </li>
             <li>
               Click <strong>Try Again</strong> below to re-connect.
@@ -50,7 +53,7 @@ export function MicPermissionModal({ onRetry, onClose }: MicPermissionModalProps
           </ol>
         </div>
 
-        <div className="flex items-center gap-2 w-full pt-2">
+        <div className="flex w-full items-center gap-2 pt-2">
           {onClose && (
             <Button variant="outline" size="default" className="flex-1" onClick={onClose}>
               Dismiss
@@ -58,7 +61,7 @@ export function MicPermissionModal({ onRetry, onClose }: MicPermissionModalProps
           )}
           <Button
             size="default"
-            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium gap-2"
+            className="flex-1 gap-2 bg-emerald-600 font-medium text-white hover:bg-emerald-700"
             onClick={onRetry}
           >
             <RefreshCw className="size-4" />

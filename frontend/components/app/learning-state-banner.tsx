@@ -1,15 +1,21 @@
 'use client';
 
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { ConnectionState } from 'livekit-client';
+import { Loader2, Mic, Sparkles, StopCircle, Volume2 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { AgentState } from '@livekit/components-react';
-import { Mic, Volume2, Sparkles, Loader2, StopCircle } from 'lucide-react';
 import { cn } from '@/lib/shadcn/utils';
 
 export interface LearningStateBannerProps {
   agentState: AgentState;
-  connectionState: ConnectionState | 'disconnected' | 'connecting' | 'connected' | 'reconnecting' | string;
+  connectionState:
+    | ConnectionState
+    | 'disconnected'
+    | 'connecting'
+    | 'connected'
+    | 'reconnecting'
+    | string;
   className?: string;
 }
 
@@ -61,7 +67,7 @@ export function LearningStateBanner({
   }
 
   return (
-    <div className={cn('w-full flex justify-center px-4 py-2 pointer-events-none z-30', className)}>
+    <div className={cn('pointer-events-none z-30 flex w-full justify-center px-4 py-2', className)}>
       <AnimatePresence mode="wait">
         <motion.div
           key={agentState + '-' + connectionState}
@@ -70,21 +76,21 @@ export function LearningStateBanner({
           exit={{ opacity: 0, y: 10, scale: 0.95 }}
           transition={{ duration: 0.2 }}
           className={cn(
-            'flex items-center gap-3 px-5 py-2.5 rounded-full border shadow-md backdrop-blur-md transition-all duration-300',
+            'flex items-center gap-3 rounded-full border px-5 py-2.5 shadow-md backdrop-blur-md transition-all duration-300',
             badgeColor
           )}
         >
           <div className="flex items-center justify-center">{icon}</div>
           <div className="flex flex-col text-left">
-            <span className="text-xs md:text-sm font-semibold tracking-wide flex items-center gap-2">
+            <span className="flex items-center gap-2 text-xs font-semibold tracking-wide md:text-sm">
               {title}
               {isUserTurn && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500 text-white uppercase tracking-wider animate-pulse">
+                <span className="inline-flex animate-pulse items-center rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase">
                   Your Turn
                 </span>
               )}
             </span>
-            <span className="text-[11px] opacity-80 font-normal">{subtitle}</span>
+            <span className="text-[11px] font-normal opacity-80">{subtitle}</span>
           </div>
         </motion.div>
       </AnimatePresence>

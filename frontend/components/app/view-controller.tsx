@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTheme } from 'next-themes';
+import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useSessionContext, useAgent } from '@livekit/components-react';
+import { useAgent, useSessionContext } from '@livekit/components-react';
 import type { AppConfig } from '@/app-config';
 import { AgentSessionView_01 } from '@/components/agents-ui/blocks/agent-session-view-01';
-import { WelcomeView } from '@/components/app/welcome-view';
-import { SessionEndedView } from '@/components/app/session-ended-view';
 import { MicPermissionModal } from '@/components/app/mic-permission-modal';
-import { Loader2 } from 'lucide-react';
+import { SessionEndedView } from '@/components/app/session-ended-view';
+import { WelcomeView } from '@/components/app/welcome-view';
 
 const MotionWelcomeView = motion.create(WelcomeView);
 const MotionSessionView = motion.create(AgentSessionView_01);
@@ -59,7 +59,9 @@ export function ViewController({ appConfig }: ViewControllerProps) {
     // Verify microphone permission state before starting if browser supports permission query
     if (typeof navigator !== 'undefined' && navigator.permissions?.query) {
       try {
-        const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+        const permissionStatus = await navigator.permissions.query({
+          name: 'microphone' as PermissionName,
+        });
         if (permissionStatus.state === 'denied') {
           setMicError(true);
           return;
@@ -109,16 +111,16 @@ export function ViewController({ appConfig }: ViewControllerProps) {
           <motion.div
             key="connecting"
             {...VIEW_MOTION_PROPS}
-            className="flex flex-col items-center justify-center space-y-4 text-center p-6"
+            className="flex flex-col items-center justify-center space-y-4 p-6 text-center"
           >
-            <div className="size-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <Loader2 className="size-8 text-emerald-500 animate-spin" />
+            <div className="flex size-16 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10">
+              <Loader2 className="size-8 animate-spin text-emerald-500" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-foreground">
+              <h2 className="text-foreground text-xl font-bold">
                 Connecting to your Learning Assistant...
               </h2>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-muted-foreground mt-1 text-xs">
                 Please wait a moment while we establish your voice session
               </p>
             </div>
@@ -153,20 +155,13 @@ export function ViewController({ appConfig }: ViewControllerProps) {
 
         {/* State 5: Call Ended View */}
         {showEnded && (
-          <MotionEndedView
-            key="call-ended"
-            {...VIEW_MOTION_PROPS}
-            onStartAgain={handleStartCall}
-          />
+          <MotionEndedView key="call-ended" {...VIEW_MOTION_PROPS} onStartAgain={handleStartCall} />
         )}
       </AnimatePresence>
 
       {/* Step 4: Microphone Permission Error Modal */}
       {micError && (
-        <MicPermissionModal
-          onRetry={handleStartCall}
-          onClose={() => setMicError(false)}
-        />
+        <MicPermissionModal onRetry={handleStartCall} onClose={() => setMicError(false)} />
       )}
     </>
   );

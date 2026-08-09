@@ -118,20 +118,35 @@ export function AudioVisualizer({
     }
     default: {
       let size: 'icon' | 'sm' | 'md' | 'lg' | 'xl' = 'sm';
-      let sizedClassName = cn('h-12 w-auto items-center justify-center gap-2.5 *:min-h-[10px] *:w-[12px]', className);
+      let sizedClassName = cn(
+        'h-12 w-auto items-center justify-center gap-2.5 *:min-h-[10px] *:w-[12px]',
+        className
+      );
 
       if (audioVisualizerBarCount <= 5) {
         size = 'sm';
-        sizedClassName = cn('h-12 w-auto items-center justify-center gap-2.5 *:min-h-[10px] *:w-[12px]', className);
+        sizedClassName = cn(
+          'h-12 w-auto items-center justify-center gap-2.5 *:min-h-[10px] *:w-[12px]',
+          className
+        );
       } else if (audioVisualizerBarCount <= 10) {
         size = 'sm';
-        sizedClassName = cn('h-12 w-auto items-center justify-center gap-2 *:min-h-[8px] *:w-[9px]', className);
+        sizedClassName = cn(
+          'h-12 w-auto items-center justify-center gap-2 *:min-h-[8px] *:w-[9px]',
+          className
+        );
       } else if (audioVisualizerBarCount <= 15) {
         size = 'sm';
-        sizedClassName = cn('h-10 w-auto items-center justify-center gap-1.5 *:min-h-[6px] *:w-[7px]', className);
+        sizedClassName = cn(
+          'h-10 w-auto items-center justify-center gap-1.5 *:min-h-[6px] *:w-[7px]',
+          className
+        );
       } else if (audioVisualizerBarCount <= 30) {
         size = 'icon';
-        sizedClassName = cn('h-8 w-auto items-center justify-center gap-1 *:min-h-[4px] *:w-[5px]', className);
+        sizedClassName = cn(
+          'h-8 w-auto items-center justify-center gap-1 *:min-h-[4px] *:w-[5px]',
+          className
+        );
       }
 
       return (

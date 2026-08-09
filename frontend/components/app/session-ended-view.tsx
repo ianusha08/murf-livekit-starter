@@ -1,9 +1,22 @@
 'use client';
 
 import React from 'react';
+import { Award, BookOpen, CheckCircle2, RotateCcw, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Award, RotateCcw, BookOpen, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
+function SessionEndedHeroIcon() {
+  return (
+    <div className="relative mb-6 flex items-center justify-center">
+      <div className="flex size-20 items-center justify-center rounded-full border border-[#5d6162]/30 bg-[#5d6162]/15 text-[#63645c] shadow-md">
+        <Award className="size-10" />
+      </div>
+      <div className="absolute -right-1 -bottom-1 rounded-full border border-[#73746c]/40 bg-[#5d6162] p-1.5 text-white shadow-md">
+        <CheckCircle2 className="size-4" />
+      </div>
+    </div>
+  );
+}
 
 export interface SessionEndedViewProps {
   onStartAgain: () => void;
@@ -11,46 +24,46 @@ export interface SessionEndedViewProps {
 
 export function SessionEndedView({ onStartAgain }: SessionEndedViewProps) {
   return (
-    <section className="bg-background flex flex-col items-center justify-center text-center px-4 py-8 max-w-lg mx-auto">
+    <section className="bg-background mx-auto flex max-w-xl flex-col items-center justify-center px-4 py-8 text-center">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4 }}
         className="flex flex-col items-center"
       >
-        <div className="relative mb-6">
-          <div className="size-20 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-inner">
-            <Award className="size-10" />
-          </div>
-          <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white rounded-full p-1 shadow">
-            <CheckCircle2 className="size-4" />
-          </div>
+        <SessionEndedHeroIcon />
+
+        <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-[#5d6162]/35 bg-[#5d6162]/15 px-3.5 py-1 text-xs font-semibold text-[#53544c] shadow-2xs">
+          <Sparkles className="size-3.5" />
+          Learning & Literacy Voice Agent
         </div>
 
-        <h2 className="text-2xl font-bold text-foreground tracking-tight mb-2">
+        <h2 className="text-foreground mb-1 text-3xl font-extrabold tracking-tight md:text-4xl">
           Learning Session Complete!
         </h2>
-
-        <p className="text-muted-foreground text-sm max-w-sm leading-relaxed mb-6">
-          Great job practicing reading and speaking with your AI assistant. Regular voice practice helps build confidence and literacy skills!
+        <p className="text-muted-foreground mb-3 text-sm font-semibold md:text-base">
+          AI Voice Learning Assistant
         </p>
 
-        <div className="w-full bg-card border border-border rounded-xl p-4 mb-6 flex items-center justify-around text-left gap-4">
+        <p className="text-muted-foreground mb-6 max-w-md text-sm leading-relaxed font-normal md:text-base">
+          Great job practicing reading and speaking with your AI assistant. Regular voice practice
+          helps build confidence and literacy skills!
+        </p>
+
+        <div className="bg-card border-border mb-6 flex w-full items-center justify-around gap-4 rounded-xl border p-4 text-left shadow-2xs">
           <div className="flex items-center gap-3">
-            <BookOpen className="size-5 text-emerald-500" />
+            <BookOpen className="size-5 text-[#73746c]" />
             <div>
-              <p className="text-xs text-muted-foreground">Track</p>
-              <p className="text-xs font-semibold text-foreground">Learning & Literacy</p>
+              <p className="text-muted-foreground text-xs">Track</p>
+              <p className="text-foreground text-xs font-semibold">Learning & Literacy</p>
             </div>
           </div>
-          <div className="h-8 w-px bg-border" />
+          <div className="bg-border h-8 w-px" />
           <div className="flex items-center gap-3">
-            <CheckCircle2 className="size-5 text-emerald-500" />
+            <CheckCircle2 className="size-5 text-[#73746c]" />
             <div>
-              <p className="text-xs text-muted-foreground">Status</p>
-              <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                Session Saved
-              </p>
+              <p className="text-muted-foreground text-xs">Status</p>
+              <p className="text-xs font-semibold text-[#63645c]">Session Saved</p>
             </div>
           </div>
         </div>
@@ -58,10 +71,10 @@ export function SessionEndedView({ onStartAgain }: SessionEndedViewProps) {
         <Button
           size="lg"
           onClick={onStartAgain}
-          className="w-64 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm tracking-wide shadow-lg shadow-emerald-500/20 gap-2 h-12"
+          className="flex h-12 w-64 items-center justify-center gap-2 rounded-full border border-[#73746c]/30 bg-[#5d6162] text-sm font-bold tracking-wide text-white uppercase shadow-lg shadow-[#5d6162]/25 transition-all duration-200 hover:bg-[#73746c]"
         >
           <RotateCcw className="size-4" />
-          Start Again
+          START AGAIN
         </Button>
       </motion.div>
     </section>

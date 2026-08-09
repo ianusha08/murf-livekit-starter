@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
 import { GraduationCap, PhoneOff, Sparkles } from 'lucide-react';
-import { useAgent, useSessionContext, useSessionMessages } from '@livekit/components-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { Track } from 'livekit-client';
+import { useAgent, useSessionContext, useSessionMessages, useTrackToggle } from '@livekit/components-react';
 import { AgentChatTranscript } from '@/components/agents-ui/agent-chat-transcript';
 import { AgentDisconnectButton } from '@/components/agents-ui/agent-disconnect-button';
 import { AgentTrackToggle } from '@/components/agents-ui/agent-track-toggle';
@@ -60,13 +61,13 @@ function SakshamAvatar() {
       className="relative flex items-center justify-center"
     >
       {/* Outer glow ring */}
-      <div className="absolute size-[88px] rounded-full bg-emerald-500/10 animate-pulse" />
+      <div className="absolute size-[88px] animate-pulse rounded-full bg-emerald-500/10" />
       {/* Avatar circle */}
-      <div className="relative size-20 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-500/10">
+      <div className="relative flex size-20 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/15 shadow-lg shadow-emerald-500/10">
         <GraduationCap className="size-9 text-emerald-400" />
       </div>
       {/* Active indicator dot */}
-      <span className="absolute bottom-0.5 right-0.5 size-3.5 rounded-full bg-emerald-500 border-2 border-background shadow-md shadow-emerald-500/50" />
+      <span className="border-background absolute right-0.5 bottom-0.5 size-3.5 rounded-full border-2 bg-emerald-500 shadow-md shadow-emerald-500/50" />
     </motion.div>
   );
 }
@@ -89,21 +90,21 @@ function TranscriptCard({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3, duration: 0.4, ease: 'easeOut' }}
-      className="w-full max-w-xl mx-auto flex flex-col min-h-0"
+      className="mx-auto flex min-h-0 w-full max-w-xl flex-col"
     >
-      <div className="flex items-center gap-2 px-1 mb-2">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+      <div className="mb-2 flex items-center gap-2 px-1">
+        <span className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
           Conversation
         </span>
         {messages.length > 0 && (
-          <span className="text-[10px] bg-emerald-500/15 text-emerald-400 px-1.5 py-0.5 rounded-full font-semibold">
+          <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400">
             {messages.length}
           </span>
         )}
       </div>
 
       <div
-        className="flex-1 overflow-y-auto rounded-2xl border border-white/8 bg-white/4 backdrop-blur-sm p-3 min-h-[120px] max-h-[220px] scroll-smooth"
+        className="max-h-[220px] min-h-[120px] flex-1 overflow-y-auto scroll-smooth rounded-2xl border border-white/8 bg-white/4 p-3 backdrop-blur-sm"
         ref={scrollAreaRef}
       >
         <AnimatePresence>
@@ -113,7 +114,7 @@ function TranscriptCard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-center text-xs text-muted-foreground/60 pt-8 italic"
+              className="text-muted-foreground/60 pt-8 text-center text-xs italic"
             >
               {preConnectMessage}
             </motion.p>
@@ -140,6 +141,10 @@ function TranscriptCard({
 // ─── Controls bar ─────────────────────────────────────────────────────────────
 
 function SessionControls({ onDisconnect }: { onDisconnect: () => void }) {
+  const { enabled, pending, toggle } = useTrackToggle({
+    source: Track.Source.Microphone,
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -152,9 +157,12 @@ function SessionControls({ onDisconnect }: { onDisconnect: () => void }) {
         <AgentTrackToggle
           source="microphone"
           variant="outline"
-          className="size-14 rounded-full border-2 border-white/15 bg-white/8 backdrop-blur-sm hover:bg-white/15 text-white transition-all duration-200 hover:scale-105 active:scale-95"
+          pressed={enabled}
+          pending={pending}
+          onPressedChange={() => toggle()}
+          className="size-14 rounded-full border-2 border-white/15 bg-white/8 text-white backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:bg-white/15 active:scale-95"
         />
-        <span className="text-[10px] text-muted-foreground/70 font-medium">Microphone</span>
+        <span className="text-muted-foreground/70 text-[10px] font-medium">Microphone</span>
       </div>
 
       {/* End Call */}
@@ -163,11 +171,11 @@ function SessionControls({ onDisconnect }: { onDisconnect: () => void }) {
           id="saksham-end-call"
           onClick={onDisconnect}
           aria-label="End call"
-          className="size-14 rounded-full bg-red-500/90 hover:bg-red-500 border-2 border-red-400/30 flex items-center justify-center text-white shadow-lg shadow-red-500/30 transition-all duration-200 hover:scale-105 active:scale-95 hover:shadow-red-500/50"
+          className="flex size-14 items-center justify-center rounded-full border-2 border-red-400/30 bg-red-500/90 text-white shadow-lg shadow-red-500/30 transition-all duration-200 hover:scale-105 hover:bg-red-500 hover:shadow-red-500/50 active:scale-95"
         >
           <PhoneOff className="size-5" />
         </button>
-        <span className="text-[10px] text-muted-foreground/70 font-medium">End Call</span>
+        <span className="text-muted-foreground/70 text-[10px] font-medium">End Call</span>
       </div>
     </motion.div>
   );
@@ -212,10 +220,7 @@ export function AgentSessionView_01({
   return (
     <section
       ref={ref}
-      className={cn(
-        'relative z-10 h-full w-full overflow-hidden bg-background',
-        className
-      )}
+      className={cn('bg-background relative z-10 h-full w-full overflow-hidden', className)}
       {...props}
     >
       {/* ── Subtle background radial gradient ── */}
@@ -229,10 +234,9 @@ export function AgentSessionView_01({
       />
 
       {/* ── Main content column ── */}
-      <div className="relative z-10 flex h-full flex-col items-center justify-between px-4 pt-16 pb-8 md:pt-20 md:pb-12 gap-4">
-
+      <div className="relative z-10 flex h-full flex-col items-center justify-between gap-4 px-4 pt-16 pb-8 md:pt-20 md:pb-12">
         {/* ── TOP: Avatar + Name + Status ── */}
-        <div className="flex flex-col items-center gap-3 flex-shrink-0">
+        <div className="flex flex-shrink-0 flex-col items-center gap-3">
           <SakshamAvatar />
 
           {/* Name + role */}
@@ -242,11 +246,11 @@ export function AgentSessionView_01({
             transition={{ delay: 0.15, duration: 0.4 }}
             className="flex flex-col items-center gap-1 text-center"
           >
-            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
+            <h2 className="text-foreground text-2xl font-extrabold tracking-tight md:text-3xl">
               Saksham
             </h2>
-            <p className="text-sm text-muted-foreground font-medium">AI Learning Assistant</p>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mt-0.5">
+            <p className="text-muted-foreground text-sm font-medium">AI Learning Assistant</p>
+            <div className="mt-0.5 inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400">
               <Sparkles className="size-3" />
               Learning &amp; Literacy
             </div>
@@ -262,7 +266,7 @@ export function AgentSessionView_01({
         </div>
 
         {/* ── MIDDLE: Audio visualizer ── */}
-        <div className="flex flex-1 items-center justify-center min-h-0 w-full">
+        <div className="flex min-h-0 w-full flex-1 items-center justify-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -287,7 +291,7 @@ export function AgentSessionView_01({
         </div>
 
         {/* ── BOTTOM HALF: Transcript + Controls ── */}
-        <div className="flex flex-col gap-5 w-full max-w-xl flex-shrink-0">
+        <div className="flex w-full max-w-xl flex-shrink-0 flex-col gap-5">
           {/* Transcript */}
           <TranscriptCard
             agentState={agentState}
