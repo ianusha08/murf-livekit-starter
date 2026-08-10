@@ -1,0 +1,93 @@
+{
+  "last_updated": "2026-08-10",
+  "exercises": {
+    "beginner": {
+      "english": [
+        {
+          "id": "b_en_1",
+          "text": "The quick brown fox jumps over the lazy dog.",
+          "focus": "Basic alphabet and sentence structure"
+        },
+        {
+          "id": "b_en_2",
+          "text": "Please give me a glass of water.",
+          "focus": "Polite requests"
+        },
+        {
+          "id": "b_en_3",
+          "text": "The sun rises in the east.",
+          "focus": "Simple facts"
+        }
+      ],
+      "hindi": [
+        {
+          "id": "b_hi_1",
+          "text": "नमस्ते, आप कैसे हैं?",
+          "focus": "Common greeting"
+        },
+        {
+          "id": "b_hi_2",
+          "text": "आज मौसम बहुत अच्छा है।",
+          "focus": "Describing weather"
+        },
+        {
+          "id": "b_hi_3",
+          "text": "मेरा नाम भारत है।",
+          "focus": "Self-introduction"
+        }
+      ]
+    },
+    "intermediate": {
+      "english": [
+        {
+          "id": "i_en_1",
+          "text": "Reading books regularly helps expand your vocabulary and knowledge.",
+          "focus": "Adverbs and compound sentences"
+        },
+        {
+          "id": "i_en_2",
+          "text": "Although it was raining heavily, we decided to go for a walk.",
+          "focus": "Conjunctions and clauses"
+        }
+      ],
+      "hindi": [
+        {
+          "id": "i_hi_1",
+          "text": "यदि आप कड़ी मेहनत करेंगे, तो आप अवश्य सफल होंगे।",
+          "focus": "Conditional sentences"
+        },
+        {
+          "id": "i_hi_2",
+          "text": "पुस्तकालय ज्ञान का भंडार होता है जहाँ हमें कई नई बातें सीखने को मिलती हैं।",
+          "focus": "Complex sentences"
+        }
+      ]
+    },
+    "advanced": {
+      "english": [
+        {
+          "id": "a_en_1",
+          "text": "Peter Piper picked a peck of pickled peppers.",
+          "focus": "Alliteration and pronunciation"
+        },
+        {
+          "id": "a_en_2",
+          "text": "The ephemeral nature of the morning dew reminded her of life's fleeting moments.",
+          "focus": "Advanced vocabulary and metaphors"
+        }
+      ],
+      "hindi": [
+        {
+          "id": "a_hi_1",
+          "text": "प्रौद्योगिकी के तीव्र विकास ने मानव जीवन शैली को पूरी तरह से परिवर्तित कर दिया है।",
+          "focus": "Advanced Hindi vocabulary"
+        },
+        {
+          "id": "a_hi_2",
+          "text": "खड़क सिंह के खड़कने से खड़कती हैं खिड़कियां, खिड़कियों के खड़कने से खड़कता है खड़क सिंह।",
+          "focus": "Hindi tongue twister"
+        }
+      ]
+    }
+  }
+}

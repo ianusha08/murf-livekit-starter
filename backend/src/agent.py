@@ -327,6 +327,148 @@ CURRENT SESSION DETAILS:
 
         return await db_save_learner(self.user_id, name, language_preference, facts)
 
+    @function_tool
+    async def fetch_next_exercise(
+        self,
+        context: RunContext,
+        level: str,
+        language: str = "english",
+    ) -> str:
+        """Fetch an educational reading/speaking exercise based on the learner's level and language.
+        Call this tool when the learner asks for a practice exercise, a reading activity, a test,
+        or wants to practice pronunciation/reading.
+        
+        - level: The difficulty level ('beginner', 'intermediate', or 'advanced').
+        - language: The language of the exercise ('english' or 'hindi'). Defaults to 'english'.
+        """
+        level = level.lower().strip()
+        language = language.lower().strip()
+        
+        # Validate levels
+        if level not in ["beginner", "intermediate", "advanced"]:
+            level = "beginner"
+        if language not in ["english", "hindi"]:
+            language = "english"
+            
+        try:
+            import os
+            def _read_file():
+                dir_path = os.path.dirname(os.path.realpath(__file__))
+                json_path = os.path.join(dir_path, "exercises.json")
+                with open(json_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            
+            data = await asyncio.to_thread(_read_file)
+            last_updated = data.get("last_updated", "unknown date")
+            exercises_dict = data.get("exercises", {})
+            level_dict = exercises_dict.get(level, {})
+            exercises_list = level_dict.get(language, [])
+            
+            if not exercises_list:
+                raise ValueError("No exercises found for the specified level and language.")
+                
+            import random
+            selected = random.choice(exercises_list)
+            
+            result = {
+                "exercise_id": selected.get("id"),
+                "text": selected.get("text"),
+                "focus": selected.get("focus"),
+                "data_source_date": last_updated,
+                "status": "success"
+            }
+            return json.dumps(result, ensure_ascii=False)
+            
+        except Exception as e:
+            logger.error("Failed to fetch next exercise: %s", e)
+            # Fallback path out loud
+            fallback_exercises = {
+                "beginner": {
+                    "english": {"id": "fb_b_en", "text": "The cat sat on the mat.", "focus": "Basic CVC words"},
+                    "hindi": {"id": "fb_b_hi", "text": "यह एक आम का पेड़ है।", "focus": "Basic Hindi sentence"}
+                },
+                "intermediate": {
+                    "english": {"id": "fb_i_en", "text": "She wanted to visit the museum, but it was closed.", "focus": "Conjunctions"},
+                    "hindi": {"id": "fb_i_hi", "text": "हमें प्रतिदिन कसरत करनी चाहिए ताकि हम स्वस्थ रहें।", "focus": "Intermediate Hindi"}
+                },
+                "advanced": {
+                    "english": {"id": "fb_a_en", "text": "Six slippery snails slid slowly seaward.", "focus": "Sibilant alliteration"},
+                    "hindi": {"id": "fb_a_hi", "text": "चिट्ठी-पत्री के आदान-प्रदान से दूरियाँ कम होती हैं।", "focus": "Formal Hindi"}
+                }
+            }
+            
+            selected = fallback_exercises.get(level, fallback_exercises["beginner"]).get(language, fallback_exercises["beginner"]["english"])
+            result = {
+                "exercise_id": selected["id"],
+                "text": selected["text"],
+                "focus": selected["focus"],
+                "data_source_date": "backup-dataset-2026-08-10",
+                "status": "fallback_due_to_error",
+                "error_details": f"Error loading exercises dataset. Using local backup. Error: {str(e)}"
+            }
+            return json.dumps(result, ensure_ascii=False)
+
+    @function_tool
+    async def score_spoken_answer(
+        self,
+        context: RunContext,
+        expected_text: str,
+        spoken_text: str,
+    ) -> str:
+        """Compare the expected exercise text with the student's spoken/transcribed text and score it.
+        Call this tool ONLY when the learner has spoken their answer/reading of an exercise and you
+        have the transcribed text, and you need to grade or score their pronunciation/reading.
+        
+        - expected_text: The correct sentence or phrase that the learner was supposed to read or say.
+        - spoken_text: The actual text transcribed from the user's speech.
+        """
+        import string
+        
+        def clean_word(w: str) -> str:
+            return w.lower().translate(str.maketrans("", "", string.punctuation)).strip()
+            
+        expected_words = [clean_word(w) for w in expected_text.split() if clean_word(w)]
+        spoken_words = [clean_word(w) for w in spoken_text.split() if clean_word(w)]
+        
+        if not expected_words:
+            return json.dumps({"score": 0, "feedback": "Expected text was empty."})
+            
+        # Match words sequentially or look for exact matches
+        matched_count = 0
+        missed_words = []
+        
+        expected_set = set(expected_words)
+        spoken_set = set(spoken_words)
+        
+        matched_words = expected_set.intersection(spoken_set)
+        matched_count = len(matched_words)
+        
+        for w in expected_words:
+            if w not in spoken_set:
+                missed_words.append(w)
+                
+        score = int((matched_count / len(expected_words)) * 100)
+        
+        feedback = ""
+        if score == 100:
+            feedback = "Excellent! You pronounced every word perfectly."
+        elif score >= 80:
+            feedback = f"Great job! You got most of it right. Try to focus on: {', '.join(missed_words)}."
+        elif score >= 50:
+            feedback = f"Good attempt. Keep practicing. You missed or mispronounced some words: {', '.join(missed_words)}."
+        else:
+            feedback = "Keep trying! Let's practice it together word-by-word."
+            
+        result = {
+            "score": score,
+            "matched_words_count": matched_count,
+            "total_words_count": len(expected_words),
+            "missed_words": missed_words,
+            "feedback": feedback,
+            "evaluation_date": "2026-08-10"
+        }
+        return json.dumps(result, ensure_ascii=False)
+
 
 server = AgentServer()
 
@@ -371,7 +513,7 @@ async def my_agent(ctx: JobContext):
     agent_instance = Assistant(user_id=user_id, memory_json=memory_json)
 
     session = AgentSession(
-        stt=deepgram.STT(model="nova-3", language="multi"),
+        stt=deepgram.STT(model="nova-3", language="multi"),        
         llm=google.LLM(model="gemini-3.5-flash-lite"),  # verify against current Google model list before deploying
         tts=murf.TTS(
             voice="Pooja",

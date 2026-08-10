@@ -198,6 +198,20 @@ See the Configuration section below for voice, STT, and LLM options.
 
 ---
 
+## Learning & Literacy Track: Practice Exercises
+
+This agent supports the **Learning & Literacy** track, helping learners practice reading and pronunciation. 
+
+### Hand-Built Local Dataset
+To ensure zero latency and maximum reliability, we use a hand-built local dataset for exercises:
+- **Location**: `backend/src/exercises.json`
+- **Proficiency Levels**: Beginner, Intermediate, and Advanced
+- **Languages**: English and Hindi
+- **Metadata**: Every exercise returned includes a timestamp (`data_source_date` set to `2026-08-10`) so the learner knows when the educational content was last updated.
+- **Graceful Failures**: If the local JSON file is missing or corrupted, the agent automatically falls back to a hardcoded local backup dataset, informs the user about the backup status, and logs the issue internally rather than failing silently.
+
+---
+
 ## Configuration
 
 ### Murf voice
