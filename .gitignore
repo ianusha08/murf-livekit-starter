@@ -4,4 +4,6 @@
 .DS_Store
 livekit-server.exe
 *.db
+.venv/
+.venv_old/
 

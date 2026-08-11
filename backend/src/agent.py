@@ -254,31 +254,57 @@ If new caller:
 "नमस्ते! मैं सक्षम हूँ। मैं आपकी learning journey में आपकी मदद करने के लिए यहाँ हूँ। आज आप क्या सीखना चाहेंगे?"
 """
 
-
 class Assistant(Agent):
-    def __init__(self, user_id: str = "default_user", memory_json: str = "") -> None:
+    def __init__(
+        self,
+        user_id: str = "default_user",
+        memory_json: str = "",
+        is_sip: bool = False,
+        learner_name: str = "",
+    ) -> None:
         self.user_id = user_id
 
-        memory_context = "New learner - no previous memory found."
-        if memory_json:
-            try:
-                mem = json.loads(memory_json)
-                memory_context = (
-                    f"RETURNING LEARNER MEMORY FOUND:\n"
-                    f"- Name: {mem.get('name', 'Unknown')}\n"
-                    f"- Preferred Language: {mem.get('language_preference', 'Hindi/English')}\n"
-                    f"- Facts: {json.dumps(mem.get('facts', {}))}\n"
-                    f"- Last Interaction: {mem.get('last_interaction', '')}"
-                )
-            except json.JSONDecodeError as e:
-                # Log loudly instead of silently falling back — corrupted memory
-                # for a specific user is worth knowing about.
-                logger.error(
-                    "Failed to parse memory_json for user %s: %s. Raw value: %r",
-                    user_id, e, memory_json,
-                )
+        if is_sip:
+            # OUTBOUND DAILY PRACTICE CALL — Learning & Literacy track
+            # This fires when the agent is dispatched by the outbound dialer.
+            name_line = f"- You are calling {learner_name}. Address them by name in the greeting.\n" if learner_name else ""
+            full_instructions = (
+                f"{SYSTEM_PROMPT}\n\n"
+                "OUTBOUND DAILY PRACTICE CALL SCENARIO:\n"
+                f"{name_line}"
+                "- This is a scheduled daily reading and speaking practice session that the learner requested.\n"
+                "- Do NOT run any returning-caller lookup logic. Greet them directly.\n"
+                "- IMPORTANT: You MUST strictly open with these three sentences in order:\n"
+                "  1. 'Hello, this is Saksham, your AI learning assistant.'\n"
+                "  2. 'I am calling for your daily reading and speaking practice session, as you requested.'\n"
+                "  3. 'If you want to stop these daily practice calls, please say stop — otherwise let us begin!'\n"
+                "- After the greeting, wait for the learner's response.\n"
+                "- If they say 'stop' or ask to cancel, confirm you will not call again and end politely.\n"
+                "- If they agree to start, begin a short, friendly reading or speaking exercise appropriate to their level.\n"
+                "- Keep ALL responses extremely short (under 20 words) to avoid overwhelming the learner over the phone.\n"
+                "- Do not use markdown, bullet points, or special formatting in any response."
+            )
+        else:
+            memory_context = "New learner - no previous memory found."
+            if memory_json:
+                try:
+                    mem = json.loads(memory_json)
+                    memory_context = (
+                        f"RETURNING LEARNER MEMORY FOUND:\n"
+                        f"- Name: {mem.get('name', 'Unknown')}\n"
+                        f"- Preferred Language: {mem.get('language_preference', 'Hindi/English')}\n"
+                        f"- Facts: {json.dumps(mem.get('facts', {}))}\n"
+                        f"- Last Interaction: {mem.get('last_interaction', '')}"
+                    )
+                except json.JSONDecodeError as e:
+                    # Log loudly instead of silently falling back — corrupted memory
+                    # for a specific user is worth knowing about.
+                    logger.error(
+                        "Failed to parse memory_json for user %s: %s. Raw value: %r",
+                        user_id, e, memory_json,
+                    )
 
-        full_instructions = f"""{SYSTEM_PROMPT}
+            full_instructions = f"""{SYSTEM_PROMPT}
 
 CURRENT SESSION DETAILS:
 - Caller User ID: {user_id}
@@ -510,10 +536,34 @@ async def my_agent(ctx: JobContext):
         logger.exception("Failed to look up learner memory for user %s", user_id)
         memory_json = ""
 
-    agent_instance = Assistant(user_id=user_id, memory_json=memory_json)
+    # Determine if this is a SIP outbound call by checking participant kind or identity prefix
+    import os
+    is_sip = (
+        participant.kind == rtc.ParticipantKind.PARTICIPANT_KIND_SIP
+        or (participant.identity and participant.identity.startswith("sip_"))
+    )
+
+    # Parse room metadata set by outbound.py
+    call_type = ""          # e.g. "daily_practice"
+    learner_name_meta = ""  # name passed by dialer for personalized greeting
+    if ctx.room.metadata:
+        try:
+            room_meta = json.loads(ctx.room.metadata)
+            if isinstance(room_meta, dict):
+                call_type = room_meta.get("call_type", "")
+                learner_name_meta = room_meta.get("learner_name", "")
+        except Exception:
+            logger.warning("Could not parse room metadata: %r", ctx.room.metadata)
+
+    agent_instance = Assistant(
+        user_id=user_id,
+        memory_json=memory_json,
+        is_sip=is_sip,
+        learner_name=learner_name_meta,
+    )
 
     session = AgentSession(
-        stt=deepgram.STT(model="nova-3", language="multi"),        
+        stt=deepgram.STT(model="nova-3", language="multi"),
         llm=google.LLM(model="gemini-3.5-flash-lite"),  # verify against current Google model list before deploying
         tts=murf.TTS(
             voice="Pooja",
@@ -539,7 +589,19 @@ async def my_agent(ctx: JobContext):
 
     await session.start(agent=agent_instance, room=ctx.room, room_options=room_opts)
 
-    if memory_json:
+    if is_sip and call_type == "daily_practice":
+        # Outbound daily practice call — agent instructions already contain the
+        # 3-sentence opener; generate_reply triggers the TTS to speak it.
+        name_part = f" {learner_name_meta}" if learner_name_meta else ""
+        outbound_greeting = (
+            f"Hello{name_part}, this is Saksham, your AI learning assistant. "
+            "I am calling for your daily reading and speaking practice session, as you requested. "
+            "If you want to stop these daily practice calls, please say stop — otherwise let us begin!"
+        )
+        await session.generate_reply(
+            instructions=f"Start the outbound practice call by saying exactly: {outbound_greeting}"
+        )
+    elif memory_json:
         try:
             memory = json.loads(memory_json)
             learner_name = memory.get("name", "learner")
