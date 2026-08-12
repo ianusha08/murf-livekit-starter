@@ -3,6 +3,7 @@ import logging
 import sqlite3
 import json
 from datetime import datetime, timezone
+import uuid
 
 from dotenv import load_dotenv
 from livekit import rtc
@@ -36,7 +37,7 @@ def _init_db_sync() -> None:
     conn = sqlite3.connect(DB_PATH)
     try:
         cursor = conn.cursor()
-        cursor.execute(
+        cursor.executescript(
             """
             CREATE TABLE IF NOT EXISTS learners (
                 user_id TEXT PRIMARY KEY,
@@ -44,7 +45,15 @@ def _init_db_sync() -> None:
                 language_preference TEXT,
                 facts_json TEXT,
                 last_interaction TEXT
-            )
+            );
+            CREATE TABLE IF NOT EXISTS help_requests (
+                id TEXT PRIMARY KEY,
+                user_id TEXT,
+                summary TEXT,
+                timestamp TEXT,
+                consent_given INTEGER,
+                FOREIGN KEY(user_id) REFERENCES learners(user_id)
+            );
             """
         )
         conn.commit()
@@ -125,7 +134,7 @@ def _db_save_learner_sync(
                 name=excluded.name,
                 language_preference=excluded.language_preference,
                 facts_json=excluded.facts_json,
-                last_interaction=excluded.last_interaction
+                last_interaction=excluded.last_interaction;
             """,
             (user_id, name, language_preference, facts_str, now),
         )
@@ -135,6 +144,33 @@ def _db_save_learner_sync(
 
     logger.info("db_save_learner: saved record for user %s (name: %s)", user_id, name)
     return "Memory saved successfully"
+
+
+def _db_save_help_request_sync(
+    request_id: str,
+    user_id: str,
+    summary: str,
+    consent_given: bool,
+) -> str:
+    """Save a help request record in the help_requests table."""
+    timestamp = datetime.now(timezone.utc).isoformat()
+    consent_int = 1 if consent_given else 0
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO help_requests (id, user_id, summary, timestamp, consent_given)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (request_id, user_id, summary, timestamp, consent_int),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    logger.info("Help request %s saved for user %s", request_id, user_id)
+    return "Help request saved"
+
 
 
 async def init_db() -> None:
@@ -152,6 +188,15 @@ async def db_save_learner(
     facts: str | dict,
 ) -> str:
     return await asyncio.to_thread(_db_save_learner_sync, user_id, name, language_preference, facts)
+
+
+async def db_save_help_request(
+    request_id: str,
+    user_id: str,
+    summary: str,
+    consent_given: bool,
+) -> str:
+    return await asyncio.to_thread(_db_save_help_request_sync, request_id, user_id, summary, consent_given)
 
 
 load_dotenv(".env.local")
@@ -352,6 +397,31 @@ CURRENT SESSION DETAILS:
             return "Not saved: consent was not confirmed."
 
         return await db_save_learner(self.user_id, name, language_preference, facts)
+
+    @function_tool
+    async def request_human_help(
+        self,
+        context: RunContext,
+        summary: str,
+        consent_given: bool,
+    ) -> str:
+        """Create a human‑assistance request.
+
+        The agent should call this only after obtaining explicit consent from the learner.
+        - `summary`: Short description of the issue the learner is facing.
+        - `consent_given`: Must be True; otherwise the request is not created.
+        Returns the unique reference ID of the created help request, or a message if not saved.
+        """
+        if not consent_given:
+            logger.warning(
+                "request_human_help called without consent for user %s; refusing.",
+                self.user_id,
+            )
+            return "Help request not created: consent was not given."
+        import uuid
+        request_id = str(uuid.uuid4())
+        await db_save_help_request(request_id, self.user_id, summary, consent_given)
+        return f"Help request created with ID: {request_id}"
 
     @function_tool
     async def fetch_next_exercise(

@@ -1,0 +1,7 @@
+livekit-agents
+livekit
+python-dotenv
+# Optional additional plugins you may need later:
+# deepgram-sdk
+# google-cloud-aiplatform
+# murf-python
