@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 import sqlite3
 import json
 from datetime import datetime, timezone
@@ -25,7 +26,11 @@ from livekit.plugins.turn_detector.multilingual import MultilingualModel
 
 logger = logging.getLogger(__name__)
 
-DB_PATH = "learner_memory.db"
+# Always use backend/learner_memory.db regardless of process cwd.
+DB_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "learner_memory.db",
+)
 
 
 # ---------------------------------------------------------------------------
@@ -54,12 +59,32 @@ def _init_db_sync() -> None:
                 consent_given INTEGER,
                 FOREIGN KEY(user_id) REFERENCES learners(user_id)
             );
+            CREATE TABLE IF NOT EXISTS call_outcomes (
+                call_id TEXT PRIMARY KEY,
+                timestamp TEXT,
+                outcome TEXT CHECK(outcome IN ('success','failure'))
+            );
             """
         )
         conn.commit()
     finally:
         conn.close()
     logger.info("SQLite DB initialized at %s", DB_PATH)
+
+
+def _clear_call_outcomes_sync() -> None:
+    """Reset call analytics for a fresh backend session."""
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM call_outcomes")
+        conn.commit()
+    except sqlite3.OperationalError:
+        # Table not created yet on very first run — init_db will create it.
+        pass
+    finally:
+        conn.close()
+    logger.info("Cleared call_outcomes for new backend session")
 
 
 def _db_lookup_learner_sync(user_id: str) -> str:
@@ -171,6 +196,29 @@ def _db_save_help_request_sync(
     logger.info("Help request %s saved for user %s", request_id, user_id)
     return "Help request saved"
 
+# Sync helper to insert or update a call outcome record
+
+def _db_insert_call_outcome_sync(call_id: str, outcome: str) -> None:
+    """Insert or update a call outcome record.
+    `outcome` must be either 'success' or 'failure'.
+    """
+    timestamp = datetime.now(timezone.utc).isoformat()
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO call_outcomes (call_id, timestamp, outcome)
+            VALUES (?, ?, ?)
+            ON CONFLICT(call_id) DO UPDATE SET timestamp=excluded.timestamp, outcome=excluded.outcome;
+            """,
+            (call_id, timestamp, outcome),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 
 
 async def init_db() -> None:
@@ -197,6 +245,13 @@ async def db_save_help_request(
     consent_given: bool,
 ) -> str:
     return await asyncio.to_thread(_db_save_help_request_sync, request_id, user_id, summary, consent_given)
+
+# Async wrapper to record call outcome (success/failure)
+async def db_insert_call_outcome(call_id: str, outcome: str) -> None:
+    """Insert or update a call outcome record in the DB.
+    `outcome` must be either 'success' or 'failure'.
+    """
+    await asyncio.to_thread(_db_insert_call_outcome_sync, call_id, outcome)
 
 
 load_dotenv(".env.local")
@@ -555,6 +610,8 @@ CURRENT SESSION DETAILS:
         else:
             feedback = "Keep trying! Let's practice it together word-by-word."
             
+        self._has_scored_answer = True
+
         result = {
             "score": score,
             "matched_words_count": matched_count,
@@ -690,6 +747,25 @@ async def my_agent(ctx: JobContext):
             instructions="Greet the caller as a new learner using the FIRST-TURN GREETING in your instructions."
         )
 
+    # Keep agent running until session is terminated/disconnected
+    while ctx.room.connection_state == rtc.ConnectionState.CONN_CONNECTED:
+        await asyncio.sleep(1)
+
+    # Once call ends, write the outcome to DB
+    # We define success as the student completing an exercise (which calls score_spoken_answer)
+    # The Assistant instance can store whether it scored an answer.
+    has_completed_exercise = getattr(agent_instance, "_has_scored_answer", False)
+    final_outcome = "success" if has_completed_exercise else "failure"
+    call_id = ctx.room.name
+    logger.info("Recording call outcome for room %s (user %s): %s", call_id, user_id, final_outcome)
+    try:
+        await db_insert_call_outcome(call_id, final_outcome)
+    except Exception as e:
+        logger.error("Failed to save final outcome for room %s: %s", call_id, e)
+
 
 if __name__ == "__main__":
+    # Reset call analytics every time the backend process starts.
+    _init_db_sync()
+    _clear_call_outcomes_sync()
     cli.run_app(server)

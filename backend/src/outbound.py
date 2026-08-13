@@ -27,6 +27,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger("outbound_practice_call")
 
+# Import async DB helper to record call outcomes
+from .agent import db_insert_call_outcome
+
 
 def find_due_learner(schedule: list) -> dict | None:
     """
@@ -184,6 +187,14 @@ async def main():
 
     try:
         success = await dial_learner(target_learner, lk_api, sip_trunk_id, test_mode=force_test)
+
+        # Record call outcome (success/failure) using the dynamic room name as call_id
+        outcome = "success" if success else "failure"
+        room_name = f"practice_{target_learner['user_id']}"
+        try:
+            await db_insert_call_outcome(room_name, outcome)
+        except Exception as e:
+            logger.error(f"Failed to record call outcome for room {room_name}: {e}")
 
         # Record last_called timestamp so we don't double-dial today
         if success:

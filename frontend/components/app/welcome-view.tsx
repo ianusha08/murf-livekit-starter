@@ -1,3 +1,4 @@
+import React from 'react';
 import { BookOpen, GraduationCap, Mic, Sparkles, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -71,10 +72,22 @@ export const WelcomeView = ({
         <Button
           size="lg"
           onClick={onStartCall}
-          className="h-12 w-64 rounded-full border border-[#73746c]/30 bg-[#5d6162] text-sm font-bold tracking-wide text-white uppercase shadow-lg shadow-[#5d6162]/25 transition-all duration-200 hover:bg-[#73746c]"
+          className="h-12 w-64 rounded-full border border-[#73746c]/30 bg-[#5d6162] text-sm font-bold tracking-wide text-white uppercase shadow-lg shadow-[#5d6162]/25 transition-all duration-200 hover:bg-[#73746c] mb-12"
         >
           {startButtonText}
         </Button>
+
+        {/* Localhost Call Analytics Widget */}
+        <div className="w-full max-w-md rounded-2xl border border-[#5d6162]/25 bg-[#5d6162]/5 p-6 shadow-md">
+          <h2 className="text-foreground text-lg font-bold tracking-tight mb-1">
+            Saksham — Call Analytics
+          </h2>
+          <p className="text-muted-foreground text-xs mb-6">
+            Learning & Literacy · Voice for Bharat
+          </p>
+
+          <AnalyticsDashboardWidget />
+        </div>
       </section>
 
       <div className="fixed bottom-5 left-0 flex w-full items-center justify-center">
@@ -83,3 +96,66 @@ export const WelcomeView = ({
     </div>
   );
 };
+
+function AnalyticsDashboardWidget() {
+  const [metrics, setMetrics] = React.useState<{ total: number; successful: number; failed: number } | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  const fetchMetrics = React.useCallback(async () => {
+    try {
+      const res = await fetch("/api/metrics", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setMetrics(data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchMetrics();
+    const id = setInterval(fetchMetrics, 5000);
+    const onVisChange = () => {
+      if (document.visibilityState === "visible") fetchMetrics();
+    };
+    document.addEventListener("visibilitychange", onVisChange);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisChange);
+    };
+  }, [fetchMetrics]);
+
+  if (loading) {
+    return <p className="text-[#73746c] text-xs">Loading analytics...</p>;
+  }
+
+  const m = metrics || { total: 0, successful: 0, failed: 0 };
+
+  return (
+    <div>
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-[#5d6162]/20 bg-[#5d6162]/10 p-3">
+          <span className="text-[10px] font-bold text-[#73746c] tracking-wider uppercase">Total</span>
+          <span className="text-2xl font-extrabold text-foreground mt-1">{m.total}</span>
+        </div>
+        <div className="flex flex-col items-center justify-center rounded-xl border border-[#5d6162]/20 bg-[#5d6162]/10 p-3">
+          <span className="text-[10px] font-bold text-[#73746c] tracking-wider uppercase">Successful</span>
+          <span className="text-2xl font-extrabold text-emerald-600 mt-1">{m.successful}</span>
+        </div>
+        <div className="flex flex-col items-center justify-center rounded-xl border border-[#5d6162]/20 bg-[#5d6162]/10 p-3">
+          <span className="text-[10px] font-bold text-[#73746c] tracking-wider uppercase">Failed</span>
+          <span className="text-2xl font-extrabold text-red-500 mt-1">{m.failed}</span>
+        </div>
+      </div>
+      <button
+        onClick={fetchMetrics}
+        className="w-full rounded-lg border border-[#73746c]/30 bg-[#5d6162]/20 text-[#53544c] hover:bg-[#5d6162]/30 text-xs font-semibold py-2 transition-all duration-200"
+      >
+        Refresh Data
+      </button>
+    </div>
+  );
+}
