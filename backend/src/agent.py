@@ -348,11 +348,73 @@ MEMORY & CONSENT INSTRUCTIONS (CRITICAL RULE):
    - IF the caller says NO / declines consent:
      DO NOT call `save_caller_info`. Respect their privacy and confirm you will not save anything.
 
+SPECIALIST HANDOFF (MATHS PRACTICE):
+- You have access to a dedicated specialist: `MathsPracticeSpecialist`.
+- When the learner explicitly asks for maths practice, arithmetic drills, mental math exercises, or maths problem-solving:
+  1. Announce the handoff first by saying: "I’ll connect you to our maths practice specialist."
+  2. Call the `transfer_to_maths_specialist` tool to hand over the session.
+- Do NOT conduct in-depth maths practice drills yourself; delegate all maths practice requests to the specialist.
+- For all other questions (reading, literacy, English/Hindi grammar, general science, productivity), answer them directly and do NOT call the handoff tool.
+
 FIRST-TURN GREETING:
 
 If new caller:
 "नमस्ते! मैं सक्षम हूँ। मैं आपकी learning journey में आपकी मदद करने के लिए यहाँ हूँ। आज आप क्या सीखना चाहेंगे?"
 """
+
+
+MATHS_SPECIALIST_PROMPT = """
+IDENTITY:
+- Name: Ganit (गणित) - Maths Practice Specialist
+- Backstory: You are an enthusiastic, friendly, and patient mathematics practice specialist for Indian learners.
+- Creator/Organization: Part of the Voice for Bharat challenge using Murf AI and LiveKit.
+- Role: Your ONLY job is to guide learners through interactive maths practice, mental math drills, arithmetic exercises, and step-by-step maths problem solving.
+- Limits: You specialize STRICTLY in mathematics practice. If the learner asks about reading, grammar, general science, or non-math subjects, inform them and offer to hand back to the main assistant.
+
+OBJECTIVES:
+- Provide one clear, interactive maths problem or mental math drill at a time.
+- Start with an encouraging question appropriate to what the learner asked (e.g. addition, subtraction, multiplication, fractions, or word problems).
+- When the learner answers, verify their calculation, give warm constructive feedback, and present the next practice question.
+- If the learner is stuck or makes an error, gently guide them step-by-step to the correct answer.
+
+LANGUAGE:
+- Mirror the learner's language and style (Hindi, English, or Hinglish).
+- Always write Hindi words in Devanagari script (देवनागरी लिपि) for correct TTS pronunciation.
+- Keep responses short, concise, and conversational (1 to 3 sentences max) for voice.
+- Do NOT use markdown symbols, asterisks, bullet points, emojis, or LaTeX. Express numbers and equations naturally in words (e.g. "5 plus 7" or "५ जमा ७").
+"""
+
+
+class MathsPracticeSpecialist(Agent):
+    def __init__(
+        self,
+        user_id: str = "default_user",
+        learner_name: str = "",
+    ) -> None:
+        self.user_id = user_id
+        self.learner_name = learner_name
+        self._has_scored_answer = True
+        super().__init__(instructions=MATHS_SPECIALIST_PROMPT)
+
+    async def on_enter(self) -> None:
+        """When taking over the session, introduce self and seamlessly continue the maths practice."""
+        logger.info("MathsPracticeSpecialist entered session for user %s", self.user_id)
+        await self.session.generate_reply(
+            instructions=(
+                "Briefly introduce yourself in one short sentence as the Maths Practice Specialist (e.g. 'Hello! I am your maths practice specialist. Let us practice maths!'). "
+                "Acknowledge the learner's maths request from the conversation context, and immediately present a math practice question or problem to begin."
+            )
+        )
+
+    @function_tool
+    async def transfer_to_main_assistant(self, context: RunContext) -> Agent:
+        """Transfer the conversation back to the main learning assistant (Saksham) when the learner
+        wants to practice reading, literacy, or general non-math topics.
+        Before calling this tool, say: 'I’ll connect you back to Saksham, our main learning assistant.'
+        """
+        logger.info("Handoff back triggered: transferring user %s to main Assistant", self.user_id)
+        return Assistant(user_id=self.user_id)
+
 
 class Assistant(Agent):
     def __init__(
@@ -411,6 +473,17 @@ CURRENT SESSION DETAILS:
 - {memory_context}
 """
         super().__init__(instructions=full_instructions)
+
+    @function_tool
+    async def transfer_to_maths_specialist(self, context: RunContext) -> Agent:
+        """Hand off the conversation to the MathsPracticeSpecialist agent.
+        Call this tool ONLY when the learner explicitly requests maths practice,
+        mental math drills, arithmetic exercises, or maths problem-solving.
+        Do NOT call this tool for general learning, reading, grammar, or non-math subjects.
+        Before calling this tool, say: 'I’ll connect you to our maths practice specialist.'
+        """
+        logger.info("Handoff triggered: transferring user %s to MathsPracticeSpecialist", self.user_id)
+        return MathsPracticeSpecialist(user_id=self.user_id)
 
     @function_tool
     async def lookup_caller(self, context: RunContext) -> str:
