@@ -54,4 +54,4 @@ Configure the required API keys in `.env` and run the backend and frontend using
 
 [GitHub](https://github.com/ianusha08/murf-livekit-starter) • [Blog: Meet Saksham](https://medium.com/@iashi.s/meet-saksham-9e852ed99e65)
 
-Built with **Murf Falcon** for the **VoiceForBharat Edition**.
+Built with **Love <3**.
