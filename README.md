@@ -65,4 +65,14 @@ cd murf-livekit-starter
 
 Configure the required API credentials in your `.env` file and follow the project-specific setup instructions to run the backend and frontend.
 
+
+## Project Links
+
+- **GitHub Repository:** [murf-livekit-starter](https://github.com/ianusha08/murf-livekit-starter)
+- **Blog:** [Meet Saksham](https://medium.com/@iashi.s/meet-saksham-9e852ed99e65)
+
+---
+
+
+
 **Security Note:** Never commit API keys, environment files, or private credentials to the repository.
