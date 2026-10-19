@@ -54,3 +54,15 @@ Designed to make learning more accessible through natural voice interactions, Sa
                   Learner
 ```
 
+## Getting Started
+
+Clone the repository:
+
+```bash
+git clone https://github.com/ianusha08/murf-livekit-starter.git
+cd murf-livekit-starter
+```
+
+Configure the required API credentials in your `.env` file and follow the project-specific setup instructions to run the backend and frontend.
+
+**Security Note:** Never commit API keys, environment files, or private credentials to the repository.
