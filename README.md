@@ -15,3 +15,13 @@ Designed to make learning more accessible through natural voice interactions, Sa
 - **Call Analytics** — Tracks and analyzes call interactions.
 - **Specialist Agent Handoff** — Routes conversations to specialized agents.
 
+## Tech Stack
+
+| Component | Technology |
+|---|---|
+| Frontend | Next.js, React, TypeScript |
+| Backend | Python, LiveKit Agents |
+| Speech-to-Text (STT) | Deepgram |
+| Text-to-Speech (TTS) | Murf Falcon |
+| Real-time Communication | LiveKit |
+
