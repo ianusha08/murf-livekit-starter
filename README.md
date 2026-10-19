@@ -74,5 +74,6 @@ Configure the required API credentials in your `.env` file and follow the projec
 ---
 
 
-
 **Security Note:** Never commit API keys, environment files, or private credentials to the repository.
+
+Built with <3 for accessible and interactive learning.
