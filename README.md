@@ -25,3 +25,32 @@ Designed to make learning more accessible through natural voice interactions, Sa
 | Text-to-Speech (TTS) | Murf Falcon |
 | Real-time Communication | LiveKit |
 
+## Architecture
+
+```text
+                 Learner
+                    |
+                    v
+                  LiveKit
+                    |
+                    v
+                    STT
+                    |
+                    v
+              Saksham Agent
+                    |
+          +---------+---------+
+          |         |         |
+          v         v         v
+        Memory    Tools   Escalation
+                              |
+                              v
+                      Specialist Handoff
+                    |
+                    v
+               Murf Falcon TTS
+                    |
+                    v
+                  Learner
+```
+
